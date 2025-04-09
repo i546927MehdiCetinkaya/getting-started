@@ -51,7 +51,7 @@ jobs:
           protocol: TCP
           restart-policy: Always
 
-          # Azure File Share storage configuratie
+          # Azure File Share opslag configuratie
           azure-file-volume-share-name: ${{ secrets.AZURE_STORAGE_SHARE_NAME }}
           azure-file-volume-account-name: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
           azure-file-volume-account-key: ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}
