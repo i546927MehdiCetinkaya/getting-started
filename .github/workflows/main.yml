@@ -6,17 +6,14 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      # Checkout the repo
       - name: 'Checkout GitHub Action'
         uses: actions/checkout@v3
 
-      # Login via Azure CLI
       - name: 'Login via Azure CLI'
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Login to Azure Container Registry
       - name: 'ACR Login'
         uses: azure/docker-login@v1
         with:
@@ -24,31 +21,27 @@ jobs:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
-      # Build and push Docker image
       - name: 'Docker build and push'
         run: |
           echo "Building image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.run_number }}"
           docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.run_number }}
           docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.run_number }}
 
-      # Show Docker images for debug
       - name: 'Show Docker images'
         run: docker images
 
-      # Debug: Print out deploy image info
       - name: 'Debug: Show deploy image name'
         run: echo "Deploying image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.run_number }}"
 
-      # Deploy to Azure Container Instances
       - name: 'Deploy to Azure Container Instances'
         uses: azure/aci-deploy@v1
         with:
-          resource-group: ${{ secrets.RESOURCE_GROUP }}
-          dns-name-label: ${{ secrets.RESOURCE_GROUP }}${{ github.run_number }}
-          image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.run_number }}
-          registry-login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
-          registry-username: ${{ secrets.REGISTRY_USERNAME }}
-          registry-password: ${{ secrets.REGISTRY_PASSWORD }}
+          resource-group: "${{ secrets.RESOURCE_GROUP }}"
+          dns-name-label: "${{ secrets.RESOURCE_GROUP }}${{ github.run_number }}"
+          image: "${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.run_number }}"
+          registry-login-server: "${{ secrets.REGISTRY_LOGIN_SERVER }}"
+          registry-username: "${{ secrets.REGISTRY_USERNAME }}"
+          registry-password: "${{ secrets.REGISTRY_PASSWORD }}"
           name: getting-started-github
           location: 'west europe'
           ports: '3000'
