@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout the code
+      # Checkout de code
       - name: Checkout GitHub Action
         uses: actions/checkout@v3
 
@@ -25,24 +25,14 @@ jobs:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
-      # Build and push Docker image to Azure Container Registry
+      # Docker build en push naar Azure Container Registry
       - name: Docker build and push
         run: |
           echo "Building and pushing image..."
           docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.run_number }}
           docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.run_number }}
 
-      # Delete existing ACI (if exists)
-      - name: Delete existing ACI if it exists
-        run: |
-          az container delete --name getting-started --resource-group ${{ secrets.RESOURCE_GROUP }} --yes
-        env:
-          AZURE_AUTHORITY_HOST: ${{ secrets.AZURE_AUTHORITY_HOST }}
-          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-
-      # Deploy to Azure Container Instances
+      # Deploy naar Azure Container Instances (geen verwijderen van de oude container)
       - name: Deploy to Azure Container Instances
         uses: azure/aci-deploy@v1
         with:
@@ -52,7 +42,7 @@ jobs:
           registry-login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
           registry-username: ${{ secrets.REGISTRY_USERNAME }}
           registry-password: ${{ secrets.REGISTRY_PASSWORD }}
-          name: getting-started  # Name of the container instance
+          name: getting-started  # De naam van de bestaande container
           location: west europe
           ports: 3000
           cpu: 1
@@ -60,3 +50,13 @@ jobs:
           os-type: Linux
           protocol: TCP
           restart-policy: Always
+          # Voeg persistente opslag toe (Azure Blob Storage)
+          volumes: |
+            - name: myStorageVolume
+              azureFile:
+                shareName: ${{ secrets.AZURE_STORAGE_SHARE_NAME }}
+                storageAccountName: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
+                storageAccountKey: ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}
+          volume-mounts: |
+            - name: myStorageVolume
+              mountPath: /app/data  # Pad in je container waar je de opslag wilt mounten
