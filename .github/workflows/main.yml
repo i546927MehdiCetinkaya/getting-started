@@ -52,9 +52,3 @@ jobs:
           name: getting-started-github
           location: 'west europe'
           ports: '3000'
-          cpu: 1
-          memory: 1.5
-          ip-address: Public
-          os-type: Linux
-          protocol: TCP
-          restart-policy: Always
