@@ -32,7 +32,7 @@ jobs:
           docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.run_number }}
           docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.run_number }}
 
-      # Deploy naar Azure Container Instances met volume mount
+      # Deploy naar Azure Container Instances met storage mount
       - name: Deploy to Azure Container Instances
         uses: azure/aci-deploy@v1
         with:
@@ -51,24 +51,9 @@ jobs:
           protocol: TCP
           restart-policy: Always
 
-          # Persistente opslag via Azure File Share
-          volumes: |
-            [
-              {
-                "name": "myStorageVolume",
-                "azureFile": {
-                  "shareName": "${{ secrets.AZURE_STORAGE_SHARE_NAME }}",
-                  "storageAccountName": "${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}",
-                  "storageAccountKey": "${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}"
-                }
-              }
-            ]
-
-          volume-mounts: |
-            [
-              {
-                "name": "myStorageVolume",
-                "mountPath": "/app/data",
-                "readOnly": false
-              }
-            ]
+          # Azure File Share storage configuratie
+          azure-file-volume-share-name: ${{ secrets.AZURE_STORAGE_SHARE_NAME }}
+          azure-file-volume-account-name: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
+          azure-file-volume-account-key: ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}
+          azure-file-volume-mount-path: /app/data
+          azure-file-volume-read-only: false
