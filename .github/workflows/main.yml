@@ -32,7 +32,7 @@ jobs:
           docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.run_number }}
           docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.run_number }}
 
-      # Deploy naar Azure Container Instances (geen verwijderen van de oude container)
+      # Deploy naar Azure Container Instances met volume mount
       - name: Deploy to Azure Container Instances
         uses: azure/aci-deploy@v1
         with:
@@ -42,21 +42,33 @@ jobs:
           registry-login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
           registry-username: ${{ secrets.REGISTRY_USERNAME }}
           registry-password: ${{ secrets.REGISTRY_PASSWORD }}
-          name: getting-started  # De naam van de bestaande container
-          location: west europe
+          name: getting-started
+          location: westeurope
           ports: 3000
           cpu: 1
           memory: 1.5
           os-type: Linux
           protocol: TCP
           restart-policy: Always
-          # Voeg persistente opslag toe (Azure Blob Storage)
+
+          # Persistente opslag via Azure File Share
           volumes: |
-            - name: myStorageVolume
-              azureFile:
-                shareName: ${{ secrets.AZURE_STORAGE_SHARE_NAME }}
-                storageAccountName: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
-                storageAccountKey: ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}
+            [
+              {
+                "name": "myStorageVolume",
+                "azureFile": {
+                  "shareName": "${{ secrets.AZURE_STORAGE_SHARE_NAME }}",
+                  "storageAccountName": "${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}",
+                  "storageAccountKey": "${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}"
+                }
+              }
+            ]
+
           volume-mounts: |
-            - name: myStorageVolume
-              mountPath: /app/data  # Pad in je container waar je de opslag wilt mounten
+            [
+              {
+                "name": "myStorageVolume",
+                "mountPath": "/app/data",
+                "readOnly": false
+              }
+            ]
