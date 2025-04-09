@@ -35,7 +35,7 @@ jobs:
       # Delete existing ACI (if exists)
       - name: Delete existing ACI if it exists
         run: |
-          az container delete --name getting-started --resource-group ${{ secrets.RESOURCE_GROUP }} --yes --no-wait
+          az container delete --name getting-started --resource-group ${{ secrets.RESOURCE_GROUP }} --yes
         env:
           AZURE_AUTHORITY_HOST: ${{ secrets.AZURE_AUTHORITY_HOST }}
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
