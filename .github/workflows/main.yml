@@ -16,8 +16,8 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Docker login to Azure Container Registry
-      - name: 'Build and push image'
+      # Login to Azure Container Registry
+      - name: 'ACR Login'
         uses: azure/docker-login@v1
         with:
           login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
@@ -27,8 +27,17 @@ jobs:
       # Build and push Docker image
       - name: 'Docker build and push'
         run: |
+          echo "Building image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.run_number }}"
           docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.run_number }}
           docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.run_number }}
+
+      # Show Docker images for debug
+      - name: 'Show Docker images'
+        run: docker images
+
+      # Debug: Print out deploy image info
+      - name: 'Debug: Show deploy image name'
+        run: echo "Deploying image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.run_number }}"
 
       # Deploy to Azure Container Instances
       - name: 'Deploy to Azure Container Instances'
@@ -43,3 +52,9 @@ jobs:
           name: getting-started-github
           location: 'west europe'
           ports: '3000'
+          cpu: 1
+          memory: 1.5
+          ip-address: Public
+          os-type: Linux
+          protocol: TCP
+          restart-policy: Always
