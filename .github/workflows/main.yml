@@ -1,59 +1,34 @@
-name: GettingStarted_Container_Workflow
+name: Deploy to Azure Container Instances
 
 on: [push]
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout de code
-      - name: Checkout GitHub Action
-        uses: actions/checkout@v3
-
-      # Login via Azure CLI
-      - name: Login via Azure CLI
+      # Authenticate with Azure
+      - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Azure Container Registry login
-      - name: Azure Container Registry Login
-        uses: azure/docker-login@v1
-        with:
-          login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
-
-      # Docker build en push naar Azure Container Registry
-      - name: Docker build and push
+      # Deploy container using explicit CLI command (matches your manual version)
+      - name: Create/Update Container Instance
         run: |
-          echo "Building and pushing image..."
-          docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.run_number }}
-          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.run_number }}
+          az container delete \
+            --resource-group RGR-ACR \
+            --name getting-started \
+            --yes || true  # Ignore error if container doesn't exist
 
-      # Deploy naar Azure Container Instances met storage mount
-      - name: Deploy to Azure Container Instances
-        uses: azure/aci-deploy@v1
-        with:
-          resource-group: ${{ secrets.RESOURCE_GROUP }}
-          dns-name-label: ${{ secrets.RESOURCE_GROUP }}-${{ github.run_number }}
-          image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.run_number }}
-          registry-login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
-          registry-username: ${{ secrets.REGISTRY_USERNAME }}
-          registry-password: ${{ secrets.REGISTRY_PASSWORD }}
-          name: getting-started
-          location: westeurope
-          ports: 3000
-          cpu: 1
-          memory: 1.5
-          os-type: Linux
-          protocol: TCP
-          restart-policy: Always
-
-          # Azure File Share opslag configuratie
-          azure-file-volume-share-name: ${{ secrets.AZURE_STORAGE_SHARE_NAME }}
-          azure-file-volume-account-name: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
-          azure-file-volume-account-key: ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}
-          azure-file-volume-mount-path: /etc/todos
-          azure-file-volume-read-only: false
+          az container create \
+            --resource-group RGR-ACR \
+            --name getting-started \
+            --image registryvanmehdi.azurecr.io/gettingstarted:v1 \
+            --azure-file-volume-share-name sharevanmehdi \
+            --azure-file-volume-account-name storagevanmehdi \
+            --azure-file-volume-account-key "${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}" \
+            --azure-file-volume-mount-path /etc/todos \
+            --ports 3000 \
+            --os-type Linux \
+            --restart-policy Always
