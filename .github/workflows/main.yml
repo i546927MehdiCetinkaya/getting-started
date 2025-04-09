@@ -13,20 +13,24 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Deploy container using explicit CLI command (matches your manual version)
+      # Deploy container using all your existing secrets
       - name: Create/Update Container Instance
         run: |
+          # Force-replace existing container
           az container delete \
-            --resource-group RGR-ACR \
+            --resource-group ${{ secrets.RESOURCE_GROUP }} \
             --name getting-started \
-            --yes || true  # Ignore error if container doesn't exist
+            --yes || true
 
+          # Create with ACR auth and storage mount
           az container create \
-            --resource-group RGR-ACR \
+            --resource-group ${{ secrets.RESOURCE_GROUP }} \
             --name getting-started \
-            --image registryvanmehdi.azurecr.io/gettingstarted:v1 \
-            --azure-file-volume-share-name sharevanmehdi \
-            --azure-file-volume-account-name storagevanmehdi \
+            --image ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:v1 \
+            --registry-username ${{ secrets.REGISTRY_USERNAME }} \
+            --registry-password ${{ secrets.REGISTRY_PASSWORD }} \
+            --azure-file-volume-share-name ${{ secrets.AZURE_STORAGE_SHARE_NAME }} \
+            --azure-file-volume-account-name ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }} \
             --azure-file-volume-account-key "${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}" \
             --azure-file-volume-mount-path /etc/todos \
             --ports 3000 \
