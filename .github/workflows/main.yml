@@ -36,5 +36,5 @@ jobs:
             --ports 3000 \
             --os-type Linux \
             --restart-policy Always \
-            --cpu 1 \          # Required: Number of CPU cores
-            --memory 1.5       # Required: Memory in GB
+            --cpu 1 \
+            --memory 1.5
