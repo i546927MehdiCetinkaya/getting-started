@@ -13,7 +13,7 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Deploy container using all your existing secrets
+      # Deploy container with all required parameters
       - name: Create/Update Container Instance
         run: |
           # Force-replace existing container
@@ -22,7 +22,7 @@ jobs:
             --name getting-started \
             --yes || true
 
-          # Create with ACR auth and storage mount
+          # Create with required CPU/memory specs
           az container create \
             --resource-group ${{ secrets.RESOURCE_GROUP }} \
             --name getting-started \
@@ -35,4 +35,6 @@ jobs:
             --azure-file-volume-mount-path /etc/todos \
             --ports 3000 \
             --os-type Linux \
-            --restart-policy Always
+            --restart-policy Always \
+            --cpu 1 \          # Required: Number of CPU cores
+            --memory 1.5       # Required: Memory in GB
